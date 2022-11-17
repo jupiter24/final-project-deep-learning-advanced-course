@@ -180,7 +180,7 @@ class ResBlock(TimestepBlock):
         self.use_scale_shift_norm = use_scale_shift_norm
 
         self.in_layers = nn.Sequential(
-            normalization(channels),
+            normalization(channels), #we have to change this line if we want to implement the batch normalization conditioning
             nn.SiLU(),
             conv_nd(dims, channels, self.out_channels, 3, padding=1),
         )
@@ -204,7 +204,7 @@ class ResBlock(TimestepBlock):
             ),
         )
         self.out_layers = nn.Sequential(
-            normalization(self.out_channels),
+            normalization(self.out_channels), #we have to change this line if we want to implement the batch normalization conditioning
             nn.SiLU(),
             nn.Dropout(p=dropout),
             zero_module(
@@ -241,8 +241,11 @@ class ResBlock(TimestepBlock):
             x = self.x_upd(x)
             h = in_conv(h)
         else:
+            #this layers will perform a batch normalization
             h = self.in_layers(x)
         emb_out = self.emb_layers(emb).type(h.dtype)
+
+        #the noise images tensor and the embedding must have the same shape so that we can sum them
         while len(emb_out.shape) < len(h.shape):
             emb_out = emb_out[..., None]
         if self.use_scale_shift_norm:
@@ -251,8 +254,14 @@ class ResBlock(TimestepBlock):
             h = out_norm(h) * (1 + scale) + shift
             h = out_rest(h)
         else:
+            #HERE THE CONDITION HAPPENS
+            #do we need to do this if we use the batch normalization conditioning?
             h = h + emb_out
+
+            #this layers will perform a batch normalization
             h = self.out_layers(h)
+
+        #skip_connection layer does not perform any operation
         return self.skip_connection(x) + h
 
 
@@ -422,6 +431,8 @@ class UNetModel(nn.Module):
     :param resblock_updown: use residual blocks for up/downsampling.
     :param use_new_attention_order: use a different attention pattern for potentially
                                     increased efficiency.
+    :param condition_size: the size of the condition
+    :param conditioning: if we want to use a cnditional model or not
     """
 
     def __init__(
@@ -445,6 +456,8 @@ class UNetModel(nn.Module):
         use_scale_shift_norm=False,
         resblock_updown=False,
         use_new_attention_order=False,
+        condition_size=2048,
+        conditioning=False
     ):
         super().__init__()
 
@@ -467,12 +480,21 @@ class UNetModel(nn.Module):
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
 
-        time_embed_dim = model_channels * 4
+        self.condition_size = condition_size
+        self.conditioning = conditioning
+
+
+        #project the embedding
+        time_embed_dim = model_channels * 4  #this should be equal to 512
         self.time_embed = nn.Sequential(
             linear(model_channels, time_embed_dim),
             nn.SiLU(),
             linear(time_embed_dim, time_embed_dim),
         )
+
+        #if we want to use the condition then we add a layer to project the condition to a smaller dimension
+        if self.conditioning:
+            self.condition_projector = nn.Linear(self.condition_size,time_embed_dim)
 
         if self.num_classes is not None:
             self.label_emb = nn.Embedding(num_classes, time_embed_dim)
@@ -631,13 +653,14 @@ class UNetModel(nn.Module):
         self.middle_block.apply(convert_module_to_f32)
         self.output_blocks.apply(convert_module_to_f32)
 
-    def forward(self, x, timesteps, y=None):
+    def forward(self, x, timesteps, y=None, condition=None):
         """
         Apply the model to an input batch.
 
         :param x: an [N x C x ...] Tensor of inputs.
         :param timesteps: a 1-D batch of timesteps.
         :param y: an [N] Tensor of labels, if class-conditional.
+        :param condition: an [N x condition_size] vector containing the conditioning representation
         :return: an [N x C x ...] Tensor of outputs.
         """
         assert (y is not None) == (
@@ -645,11 +668,20 @@ class UNetModel(nn.Module):
         ), "must specify y if and only if the model is class-conditional"
 
         hs = []
+        """
+        create an embedding for each element of the batch according to the timestep of each element and then project them using linear layers time_embed
+        emb: an [N x model_channels*4 ] Tensor
+        """
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
+
+
+        #project the condition to the same size of the embedding and then sum
+        if condition is not None:
+            emb = emb + self.condition_projector(condition)
 
         h = x.type(self.dtype)
         for module in self.input_blocks:
