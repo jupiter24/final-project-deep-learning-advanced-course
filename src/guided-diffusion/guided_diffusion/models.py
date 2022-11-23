@@ -31,6 +31,8 @@ def get_dino_model():
 	resnet50.fc = torch.nn.Identity()
 	resnet50.head = DinoHead()
 	resnet50.load_state_dict(dino_model, strict=True)
+	for param in resnet50.parameters():
+            param.requires_grad = False
 	resnet50.to(dev()).eval()
 
 	return resnet50

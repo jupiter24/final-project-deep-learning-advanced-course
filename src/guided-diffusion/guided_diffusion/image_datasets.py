@@ -16,7 +16,7 @@ def load_data(batch_size=50, shuffle=True, num_workers=1, pin_memory=True):
 	])
 
 	train_dataset = datasets.ImageFolder(
-		root='../../../data/train',
+		root='../../../data/train_2classes',
 		transform=transform
 	)
 

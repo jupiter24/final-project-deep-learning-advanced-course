@@ -156,6 +156,7 @@ class TrainLoop:
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
             batch, _ = next(self.data)
+            batch = batch.cuda()
             cond = cond_model(batch)
 
             self.run_step(batch, cond)
