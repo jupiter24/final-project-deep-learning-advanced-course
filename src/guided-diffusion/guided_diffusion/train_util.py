@@ -159,6 +159,7 @@ class TrainLoop:
             batch = batch.cuda()
             cond = cond_model(batch)
 
+            batch = interpolate(batch, size=self.model.image_size)
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
