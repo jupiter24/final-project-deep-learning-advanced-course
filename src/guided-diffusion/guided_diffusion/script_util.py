@@ -45,7 +45,7 @@ def model_and_diffusion_defaults():
     Defaults for image training.
     """
     res = dict(
-        image_size=64,
+        image_size=32,
         num_channels=128,
         num_res_blocks=2,
         num_heads=4,
@@ -150,8 +150,8 @@ def create_model(
     conditioning=False
 ):
     if channel_mult == "":
-        if image_size == 512:
-            channel_mult = (0.5, 1, 1, 2, 2, 4, 4)
+        if image_size == 32:
+            channel_mult = (1, 2, 2, 2)
         elif image_size == 256:
             channel_mult = (1, 1, 2, 2, 4, 4)
         elif image_size == 128:

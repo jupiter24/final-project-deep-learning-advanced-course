@@ -30,7 +30,7 @@ def main():
     model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
-    data = load_data()
+    data = load_data(args.batch_size)
 
     dino_model = models.get_dino_model()
 
@@ -61,11 +61,11 @@ def create_argparser():
         lr=1e-4,
         weight_decay=0.0,
         lr_anneal_steps=0,
-        batch_size=1,
+        batch_size=150,
         microbatch=-1,  # -1 disables microbatches
         ema_rate="0.9999",  # comma-separated list of EMA values
-        log_interval=10,
-        save_interval=10000,
+        log_interval=1,
+        save_interval=100,
         resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,

@@ -5,10 +5,10 @@ from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 
 
-def load_data(batch_size=50, shuffle=True, num_workers=1, pin_memory=True):
+def load_data(batch_size=256, shuffle=True, num_workers=1, pin_memory=True):
 	normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 	transform = transforms.Compose([
-		transforms.RandomResizedCrop(224),  # they do it centered
+		transforms.RandomResizedCrop(32),  # they do it centered
 		transforms.RandomHorizontalFlip(),
 		# if we flip it before getting the representation then we have to do it for the diffusin model too
 		transforms.ToTensor(),
