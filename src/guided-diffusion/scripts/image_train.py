@@ -61,11 +61,11 @@ def create_argparser():
         lr=1e-4,
         weight_decay=0.0,
         lr_anneal_steps=0,
-        batch_size=150,
-        microbatch=-1,  # -1 disables microbatches
+        batch_size=2601,
+        microbatch=128,  # -1 disables microbatches
         ema_rate="0.9999",  # comma-separated list of EMA values
-        log_interval=1,
-        save_interval=100,
+        log_interval=50,
+        save_interval=600,
         resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,

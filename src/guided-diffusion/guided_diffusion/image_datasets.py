@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from matplotlib import pyplot as plt
 
 
-def load_data(batch_size=256, shuffle=True, num_workers=1, pin_memory=True):
+def load_data(batch_size=256, shuffle=True, num_workers=2, pin_memory=True):
 	normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 	transform = transforms.Compose([
 		transforms.RandomResizedCrop(32),  # they do it centered
