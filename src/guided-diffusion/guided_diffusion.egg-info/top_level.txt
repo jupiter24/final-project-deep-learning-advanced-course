@@ -1,1 +1,1 @@
-guided_diffusion
+guided-diffusion
