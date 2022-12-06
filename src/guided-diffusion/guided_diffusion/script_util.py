@@ -60,6 +60,7 @@ def model_and_diffusion_defaults():
         resblock_updown=False,
         use_fp16=False,
         use_new_attention_order=False,
+        condition_size=2048,
         conditioning=True
     )
     res.update(diffusion_defaults())
@@ -147,6 +148,7 @@ def create_model(
     resblock_updown=False,
     use_fp16=False,
     use_new_attention_order=False,
+    condition_size=2048,
     conditioning=False
 ):
     if channel_mult == "":
@@ -185,6 +187,7 @@ def create_model(
         use_scale_shift_norm=use_scale_shift_norm,
         resblock_updown=resblock_updown,
         use_new_attention_order=use_new_attention_order,
+        condition_size=condition_size,
         conditioning=conditioning
     )
 
