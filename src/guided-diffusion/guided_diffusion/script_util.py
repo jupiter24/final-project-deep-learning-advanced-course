@@ -97,6 +97,7 @@ def create_model_and_diffusion(
     resblock_updown,
     use_fp16,
     use_new_attention_order,
+    condition_size,
     conditioning
 ):
     model = create_model(
@@ -116,6 +117,7 @@ def create_model_and_diffusion(
         resblock_updown=resblock_updown,
         use_fp16=use_fp16,
         use_new_attention_order=use_new_attention_order,
+        condition_size=condition_size,
         conditioning=conditioning
     )
     diffusion = create_gaussian_diffusion(
