@@ -26,6 +26,7 @@ from guided_diffusion.script_util import (
 from guided_diffusion import models
 import datetime
 import re
+from torch.nn.functional import interpolate
 
 
 def natural_sort(l):
@@ -77,7 +78,7 @@ def main():
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
         )
 
-
+        batch = interpolate(batch, size=32)
         batch = ((batch[0:1] + 1) * 127.5).clamp(0, 255).to(th.uint8)
         batch = batch.permute(0, 2, 3, 1)
         batch = batch.contiguous()

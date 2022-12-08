@@ -25,6 +25,7 @@ from guided_diffusion.script_util import (
 )
 from guided_diffusion import models
 import datetime
+from torch.nn.functional import interpolate
 
 
 def main():
@@ -77,6 +78,7 @@ def main():
                 model_kwargs=model_kwargs,
             )
 
+        batch = interpolate(batch, size=32)
         batch = ((batch[0:1] + 1) * 127.5).clamp(0, 255).to(th.uint8)
         batch = batch.permute(0, 2, 3, 1)
         batch = batch.contiguous()
