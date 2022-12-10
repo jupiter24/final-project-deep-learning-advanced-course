@@ -167,7 +167,7 @@ class TrainLoop:
             if self.use_head:
                 cond = cond_model.head(cond)
 
-            batch = interpolate(batch, size=self.model.image_size)
+            #batch = interpolate(batch, size=self.model.image_size)
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()

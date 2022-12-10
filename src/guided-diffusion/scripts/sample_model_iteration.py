@@ -42,8 +42,13 @@ def main():
     dist_util.setup_dist()
     logger.configure()
 
-    dino_model = models.get_dino_model()
-    dino_model.eval()
+    if args.use_dino:
+        logger.log("Loading dino classification model")
+        classification_model = models.get_dino_model()
+    else:
+        logger.log("Loading supervised classification model")
+        classification_model = models.get_supervised_model()
+    classification_model.eval()
 
     logger.log("Load data...")
     data = load_data_sample(
@@ -71,7 +76,7 @@ def main():
         model_kwargs = {}
 
         with th.no_grad():
-            feat = dino_model(batch).detach()
+            feat = classification_model(batch).detach()
             model_kwargs["condition"] = feat
 
         sample_fn = (
@@ -127,7 +132,8 @@ def create_argparser():
         use_ddim=False,
         model_dir_path="",
         out_dir="/home/deep-learning-advanced-course/results/sample_images",
-        name='{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now())
+        name='{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now()),
+        use_dino=True
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
