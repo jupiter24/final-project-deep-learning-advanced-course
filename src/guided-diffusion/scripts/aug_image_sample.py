@@ -100,7 +100,7 @@ def main():
         samples = sample.contiguous()
 
         all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
-        logger.log(f"created {len(all_images) * args.batch_size} samples")
+        logger.log(f"created {len(all_images)} samples")
         num_current_samples += 1
 
     print(time()-starttime)
@@ -115,7 +115,6 @@ def create_argparser():
     defaults = dict(
         data_dir="",
         clip_denoised=True,
-        num_samples=10,
         batch_size=1,
         use_ddim=False,
         model_path="",
