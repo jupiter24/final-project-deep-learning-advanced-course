@@ -70,7 +70,7 @@ def main():
     batch, _ = next(data)
     batch = batch[0:1].repeat(args.batch_size, 1, 1, 1).cuda()
     batch_greyscale = transforms.Grayscale(3)(batch)
-    batch_colorjitter = transforms.ColorJitter()(batch)
+    batch_colorjitter = transforms.ColorJitter(brightness=.5, hue=.3)(batch)
 
     batches = [batch, batch_greyscale, batch_colorjitter]
 
