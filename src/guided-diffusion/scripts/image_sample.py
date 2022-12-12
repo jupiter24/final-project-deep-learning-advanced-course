@@ -46,6 +46,7 @@ def main():
     data = load_data_sample(
         data_dir=args.data_dir,
         batch_size=1,
+        shuffle=args.shuffle
     )
 
     logger.log("creating model and diffusion...")
@@ -66,7 +67,7 @@ def main():
     sample_fn = (diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop)
     num_current_samples = 0
 
-    starttime = time()
+
     while num_current_samples < args.num_samples:
         batch, _ = next(data)
         batch = batch[0:1].repeat(args.batch_size, 1, 1, 1).cuda()
@@ -94,10 +95,9 @@ def main():
         samples = sample.contiguous()
 
         all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
-        logger.log(f"created {len(all_images) * args.batch_size} samples")
+        logger.log(f"created {args.batch_size*(num_current_samples+1)} samples")
         num_current_samples += 1
 
-    print(time()-starttime)
     arr = np.concatenate(all_images, axis=0)
     save_image(th.FloatTensor(arr).permute(0, 3, 1, 2), args.out_dir + '/' + args.name + '.jpeg', normalize=True,
                scale_each=True, nrow=args.batch_size + 1)
@@ -109,13 +109,14 @@ def create_argparser():
     defaults = dict(
         data_dir="",
         clip_denoised=True,
-        num_samples=10,
+        num_samples=1,
         batch_size=1,
         use_ddim=False,
         model_path="",
         out_dir="../../../results/sample_images",
         name='{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now()),
-        use_dino=True
+        use_dino=True,
+        shuffle=True
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

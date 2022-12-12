@@ -87,10 +87,11 @@ def main():
     model.eval()
 
     sample_fn = (diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop)
-
+    num_current_image = 0
     output_images = []
 
     for image in images:
+        num_current_image += 1
 
         image = image[None, :].cuda()
         model_kwargs = {}
@@ -116,11 +117,11 @@ def main():
         samples = sample.contiguous()
 
         output_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
-        logger.log(f"created {args.batch_size} samples")
+        logger.log(f"created {args.batch_size*num_current_image} samples")
 
     arr = np.concatenate(output_images, axis=0)
     save_image(th.FloatTensor(arr).permute(0, 3, 1, 2), args.out_dir + '/' + args.name + '.jpeg', normalize=True,
-               scale_each=True, nrow=args.batch_size)
+               scale_each=True, nrow=args.batch_size+1)
     print('Image saved at: /home/deep-learning-advanced-course/results/sample_images/'+args.name+'.jpeg')
     logger.log("sampling complete")
 

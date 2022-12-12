@@ -46,6 +46,7 @@ def main():
     data = load_data_sample(
         data_dir=args.data_dir,
         batch_size=1,
+        shuffle=args.shuffle
     )
 
     logger.log("creating model and diffusion...")
@@ -66,47 +67,47 @@ def main():
     sample_fn = (diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop)
     num_current_samples = 0
 
-    starttime = time()
-    batch, _ = next(data)
-    batch = batch[0:1].repeat(args.batch_size, 1, 1, 1).cuda()
-    batch_greyscale = transforms.Grayscale(3)(batch)
-    batch_colorjitter = transforms.ColorJitter(brightness=.5, hue=.3)(batch)
 
-    batches = [batch, batch_greyscale, batch_colorjitter]
+    while num_current_samples < args.num_samples:
+        batch, _ = next(data)
+        batch = batch[0:1].repeat(args.batch_size, 1, 1, 1).cuda()
+        batch_greyscale = transforms.Grayscale(3)(batch)
+        batch_colorjitter = transforms.ColorJitter(brightness=.5, hue=.3)(batch)
 
-    for batch in batches:
+        batches = [batch, batch_greyscale, batch_colorjitter]
 
-        model_kwargs = {}
+        for batch in batches:
 
-        with th.no_grad():
-            feat = classification_model(batch).detach()
-            model_kwargs["condition"] = feat
+            model_kwargs = {}
 
-            sample = sample_fn(
-                model,
-                (args.batch_size, 3, args.image_size, args.image_size),
-                clip_denoised=args.clip_denoised,
-                model_kwargs=model_kwargs,
-            )
+            with th.no_grad():
+                feat = classification_model(batch).detach()
+                model_kwargs["condition"] = feat
 
-        batch = interpolate(batch, size=32)
-        batch = ((batch[0:1] + 1) * 127.5).clamp(0, 255).to(th.uint8)
-        batch = batch.permute(0, 2, 3, 1)
-        batch = batch.contiguous()
-        all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in batch])
+                sample = sample_fn(
+                    model,
+                    (args.batch_size, 3, args.image_size, args.image_size),
+                    clip_denoised=args.clip_denoised,
+                    model_kwargs=model_kwargs,
+                )
 
-        sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
-        sample = sample.permute(0, 2, 3, 1)
-        samples = sample.contiguous()
+            batch = interpolate(batch, size=32)
+            batch = ((batch[0:1] + 1) * 127.5).clamp(0, 255).to(th.uint8)
+            batch = batch.permute(0, 2, 3, 1)
+            batch = batch.contiguous()
+            all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in batch])
 
-        all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
-        logger.log(f"created {len(all_images)} samples")
-        num_current_samples += 1
+            sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
+            sample = sample.permute(0, 2, 3, 1)
+            samples = sample.contiguous()
 
-    print(time()-starttime)
+            all_images.extend([sample.unsqueeze(0).cpu().numpy() for sample in samples])
+            logger.log(f"created {args.batch_size*(num_current_samples+1)} samples")
+            num_current_samples += 1
+
     arr = np.concatenate(all_images, axis=0)
     save_image(th.FloatTensor(arr).permute(0, 3, 1, 2), args.out_dir + '/' + args.name + '.jpeg', normalize=True,
-               scale_each=True, nrow=3)
+               scale_each=True, nrow=args.batch_size + 1)
     print('Image saved at: /home/deep-learning-advanced-course/results/sample_images/'+args.name+'.jpeg')
     logger.log("sampling complete")
 
@@ -115,12 +116,14 @@ def create_argparser():
     defaults = dict(
         data_dir="",
         clip_denoised=True,
+        num_samples=1,
         batch_size=1,
         use_ddim=False,
         model_path="",
         out_dir="../../../results/sample_images",
         name='{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now()),
-        use_dino=True
+        use_dino=True,
+        shuffle=True
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
