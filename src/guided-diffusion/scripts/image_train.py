@@ -15,6 +15,8 @@ from guided_diffusion.script_util import (
 )
 from guided_diffusion.train_util import TrainLoop
 from guided_diffusion import models
+import torch
+from torchvision.models.feature_extraction import get_graph_node_names
 
 
 def main():
@@ -35,6 +37,10 @@ def main():
     if args.use_dino:
         logger.log("Loading dino classification model")
         classification_model = models.get_dino_model()
+        if args.use_earlier_repr:
+            classification_model.head = torch.nn.Identity()
+            classification_model.layer4[1] = torch.nn.Identity()
+            classification_model.layer4[2] = torch.nn.Identity()
     else:
         logger.log("Loading supervised classification model")
         classification_model = models.get_supervised_model()
@@ -79,6 +85,7 @@ def create_argparser():
         conditioning=True,
         use_dino=True,
         use_head=False,
+        use_earlier_repr=False,
         out_dir=None
     )
     defaults.update(model_and_diffusion_defaults())
