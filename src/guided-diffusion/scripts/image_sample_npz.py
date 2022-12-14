@@ -102,8 +102,8 @@ def main():
 
     orig_arr = np.concatenate(orig_images, axis=0)
     arr = np.concatenate(all_images, axis=0)
-    np.savez(args.out_dir + '/orig/' + args.name + '.npz', orig_arr)
-    np.savez(args.out_dir + '/gen/' + args.name + '.npz', arr)
+    np.savez(args.out_dir + '/orig_' + args.name + '.npz', orig_arr)
+    np.savez(args.out_dir + '/' + args.name + '.npz', arr)
 
     print('npz saved at: /home/deep-learning-advanced-course/results/sample_images/')
     logger.log("sampling complete")
