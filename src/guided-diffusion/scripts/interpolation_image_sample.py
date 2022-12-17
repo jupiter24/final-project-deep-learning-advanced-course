@@ -4,20 +4,12 @@ numpy array. This can be used to produce samples for FID evaluation.
 """
 
 import argparse
-import os
-from time import time
 import numpy as np
 import torch as th
-import torch.distributed as dist
-from torchvision import datasets, transforms
-from torchvision.utils import make_grid, save_image
-from PIL import Image
-from torch.utils.data import DataLoader, Dataset
-
-from guided_diffusion.image_datasets import load_data_sample
+from torchvision import transforms
+from torchvision.utils import save_image
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
-    NUM_CLASSES,
     model_and_diffusion_defaults,
     create_model_and_diffusion,
     add_dict_to_argparser,
@@ -25,8 +17,8 @@ from guided_diffusion.script_util import (
 )
 from guided_diffusion import models
 import datetime
-from torch.nn.functional import interpolate
 from PIL import Image
+import torch
 
 
 def load_image(path):
@@ -46,19 +38,22 @@ def main():
     if args.use_dino:
         logger.log("Loading dino classification model")
         classification_model = models.get_dino_model()
+        if args.use_earlier_repr:
+            classification_model.head = torch.nn.Identity()
+            classification_model.layer4[1] = torch.nn.Identity()
+            classification_model.layer4[2] = torch.nn.Identity()
     else:
         logger.log("Loading supervised classification model")
         classification_model = models.get_supervised_model()
     classification_model.eval()
 
     logger.log("Load data...")
-    image_paths = ['n03594945/ILSVRC2012_val_50classes_00005302.JPEG', 'n07749582/ILSVRC2012_val_50classes_00035888.JPEG']
+    image_paths = ['n02058221/ILSVRC2012_val_50classes_00037746.JPEG', 'n07749582/ILSVRC2012_val_50classes_00035888.JPEG']
 
     images = []
     for i in range(len(image_paths)):
         img = load_image(image_paths[i])
         images.append(img)
-
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -85,6 +80,8 @@ def main():
 
         with th.no_grad():
             feat = classification_model(image).detach()
+            if args.use_head:
+                feat = classification_model.head(feat).detach()
             feats.append(feat)
 
 
@@ -125,7 +122,10 @@ def create_argparser():
         model_path="",
         out_dir="../../../results/sample_images",
         name='{date:%Y-%m-%d_%H:%M:%S}'.format(date=datetime.datetime.now()),
-        use_dino=True
+        use_dino=True,
+        condition_size=2048,
+        use_head=False,
+        use_earlier_repr=False
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

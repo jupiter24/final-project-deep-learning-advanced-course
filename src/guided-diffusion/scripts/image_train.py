@@ -16,7 +16,6 @@ from guided_diffusion.script_util import (
 from guided_diffusion.train_util import TrainLoop
 from guided_diffusion import models
 import torch
-from torchvision.models.feature_extraction import get_graph_node_names
 
 
 def main():
