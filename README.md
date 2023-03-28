@@ -13,3 +13,6 @@ Here the links to download the models we trained:
 [Dino BackBone (animals dataset)](https://drive.google.com/file/d/1Di0YkWirbmsqKffkODXEErSXhmnn8foV/view?usp=sharing)
 
 instructions  to run the code can be found in the Diffusion Models Beat GANS on Image Synthesis [repository](https://github.com/openai/guided-diffusion)
+
+
+final report:[click] (https://github.com/jupiter24/deep-learning-advanced-course/blob/master/DD2412_Project_Report.pdf)
